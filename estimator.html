@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiDS Estimator Prime - Automated Single-Page Invoice</title>
+    <style>
+        :root {
+            --primary: #0b4f6c;
+            --secondary: #01baef;
+            --accent: #f26419;
+            --dark: #1e293b;
+            --light-bg: #f8fafc;
+            --border: #cbd5e1;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            background-color: #e2e8f0;
+            color: var(--dark);
+            font-size: 8.5pt;
+            line-height: 1.25;
+            padding: 12px;
+        }
+
+        .no-print-bar {
+            max-width: 8.3in;
+            margin: 0 auto 8px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-action {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+        .btn-action:hover { background: #d9530f; }
+
+        /* STRICT 1-PAGE LETTER CONTAINER */
+        .invoice-sheet {
+            width: 8.3in;
+            max-width: 8.3in;
+            min-height: 10.6in;
+            max-height: 10.75in;
+            margin: 0 auto;
+            background: #fff;
+            padding: 0.28in 0.32in;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .brand h1 {
+            font-size: 17pt;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .brand .sub {
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .brand .lic {
+            font-size: 7.5pt;
+            color: var(--dark);
+            margin-top: 2px;
+        }
+
+        .invoice-meta {
+            text-align: right;
+        }
+        .invoice-meta h2 {
+            font-size: 13pt;
+            color: var(--accent);
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .invoice-meta table {
+            margin-top: 2px;
+            margin-left: auto;
+            font-size: 7.5pt;
+        }
+        .invoice-meta td {
+            padding: 0.5px 3px;
+        }
+
+        .client-project-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 8px;
+            background: var(--light-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-bottom: 5px;
+            font-size: 7.5pt;
+        }
+        .block-title {
+            font-size: 7.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 1px;
+        }
+
+        .section-header {
+            font-size: 8pt;
+            font-weight: 800;
+            color: #fff;
+            background: var(--primary);
+            padding: 2.5px 6px;
+            border-radius: 3px 3px 0 0;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+            font-size: 7.5pt;
+        }
+        table.items-table th {
+            background: #e2e8f0;
+            color: var(--dark);
+            font-weight: 700;
+            text-align: left;
+            padding: 2px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        table.items-table td {
+            padding: 2px 4px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        table.items-table tr:nth-child(even) td {
+            background-color: #fafbfc;
+        }
+        .tar { text-align: right; }
+        .tac { text-align: center; }
+
+        .service-desc {
+            font-weight: 700;
+            color: var(--dark);
+            display: inline;
+        }
+        .service-detail {
+            font-size: 6.8pt;
+            color: var(--text-muted);
+            display: inline;
+            margin-left: 4px;
+        }
+
+        .benchmark-box {
+            background: #fff8f1;
+            border: 1px solid #fed7aa;
+            border-radius: 3px;
+            padding: 3px 6px;
+            margin: 3px 0;
+            display: grid;
+            grid-template-columns: 2.3fr 1fr 1.1fr;
+            gap: 6px;
+            align-items: center;
+            font-size: 7pt;
+        }
+        .benchmark-title {
+            font-weight: 700;
+            color: #9a3412;
+            font-size: 7.5pt;
+        }
+
+        .summary-flex {
+            display: grid;
+            grid-template-columns: 1.25fr 1.05fr;
+            gap: 8px;
+            align-items: start;
+            margin-top: 3px;
+        }
+
+        .scope-notes {
+            font-size: 6.8pt;
+            color: #475569;
+            line-height: 1.25;
+            background: var(--light-bg);
+            border: 1px solid var(--border);
+            padding: 4px 6px;
+            border-radius: 3px;
+        }
+        .scope-notes ul {
+            padding-left: 12px;
+            margin-top: 1px;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.5pt;
+        }
+        .totals-table td {
+            padding: 1.5px 4px;
+        }
+        .totals-table tr.grand-row td {
+            font-size: 9.5pt;
+            font-weight: 900;
+            color: var(--primary);
+            border-top: 1.5px solid var(--primary);
+            border-bottom: 1.5px solid var(--primary);
+            padding: 3px 4px;
+            background: #f0f9ff;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding-top: 3px;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 6.8pt;
+            color: var(--text-muted);
+        }
+        .signature-block {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sig-line {
+            border-bottom: 1px solid #475569;
+            width: 110px;
+            display: inline-block;
+        }
+
+        /* PRINT STYLES FOR EXACT SINGLE-PAGE PRINTING */
+        @media print {
+            html, body {
+                width: 8.5in;
+                height: 11in;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .invoice-sheet {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                max-height: 10.95in !important;
+                margin: 0 !important;
+                padding: 0.22in 0.3in !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+            }
+            @page {
+                size: letter portrait;
+                margin: 0.15in 0.15in 0.15in 0.15in;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print-bar">
+    <span style="font-weight: 700; color: #1e293b; font-size: 13px;">BiDS Estimator Prime — Automated Invoice Output</span>
+    <div>
+        <button class="btn-action" onclick="window.print()" style="margin-right: 8px;">Print / Export PDF (1-Page Fit)</button>
+        <button class="btn-action" onclick="toggleAuditing()" style="background: #475569;">Toggle Internal Margins</button>
+    </div>
+</div>
+
+<div class="invoice-sheet" id="invoiceSheet">
+    <div>
+        <!-- HEADER -->
+        <header>
+            <div class="brand">
+                <h1>BiDS, LLC</h1>
+                <div class="sub">BUILDING, INDUSTRIAL, & DEMOLITION SCIENCE</div>
+                <div class="lic">Texas Licensed Mold Assessment Company (#ACO1181) | MAC #1940 | IAC #105877</div>
+                <div style="font-size:7pt; color:#475569;">P.O. Box 33561, Amarillo, TX 79120 | (806) 403-3411 | email@bidsllc.com</div>
+            </div>
+            <div class="invoice-meta">
+                <h2>Invoice & Estimate</h2>
+                <table>
+                    <tr><td><strong>Invoice #:</strong></td><td id="invNumber">BIDS-2026-AUTOGEN</td></tr>
+                    <tr><td><strong>Date:</strong></td><td id="invDate"></td></tr>
+                    <tr><td><strong>Terms:</strong></td><td>Due Upon Receipt / Net 15</td></tr>
+                    <tr><td><strong>Statutory Rule:</strong></td><td>16 TAC Chapter 78 (TMARR)</td></tr>
+                </table>
+            </div>
+        </header>
+
+        <!-- CLIENT & PROPERTY INFO -->
+        <div class="client-project-grid">
+            <div>
+                <div class="block-title">Client Information</div>
+                <div id="uiClientName"><strong>Client Name</strong></div>
+                <div id="uiProjectName">Project Location</div>
+                <div>Phone: (806) 403-3411 | Email: email@bidsllc.com</div>
+            </div>
+            <div>
+                <div class="block-title">Project Site Profile & Scope</div>
+                <div id="uiSiteProfile"><strong>Site:</strong> 0 SF, 0 Functional Zones Evaluated</div>
+                <div><strong>Lead Consultant:</strong> Mason Sanders, MAC #1940 / IAC #105877</div>
+                <div id="uiTierProfile"><strong>Schedule:</strong> Commercial Base (1.00x)</div>
+            </div>
+        </div>
+
+        <!-- PHASE 1 TABLE -->
+        <div class="section-header">
+            <span id="phase1Title">PHASE 1: ENVIRONMENTAL ASSESSMENT & ANALYTICAL PROTOCOL</span>
+            <span style="font-size:7pt; font-weight:600;" id="uiScaleP1">Rate Scale: 1.00x</span>
+        </div>
+        <table class="items-table" id="phase1Table">
+            <thead>
+                <tr>
+                    <th style="width:54%;">Scope Description & Technical Deliverable</th>
+                    <th class="tac" style="width:11%;">Staff/Vendor</th>
+                    <th class="tac" style="width:11%;">Units</th>
+                    <th class="tar" style="width:12%;">Rate</th>
+                    <th class="tar" style="width:12%;">Total</th>
+                </tr>
+            </thead>
+            <tbody id="phase1Body">
+                <!-- Dynamically Populated -->
+            </tbody>
+        </table>
+
+        <!-- PHASE 2 TABLE (Only displays if it's a mold clearance or protocol job) -->
+        <div id="phase2Container" style="display:none;">
+            <div class="section-header" style="background:#1e3a5f;">
+                <span>PHASE 2: POST-REMEDIATION VERIFICATION (PRV) CLEARANCE & CLOSEOUT</span>
+                <span style="font-size:7pt; font-weight:600;">Governing Standard: 16 TAC §78.64</span>
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width:54%;">Detailed PRV Consultant & Technical Scope</th>
+                        <th class="tac" style="width:11%;">Staff/Vendor</th>
+                        <th class="tac" style="width:11%;">Units</th>
+                        <th class="tar" style="width:12%;">Rate</th>
+                        <th class="tar" style="width:12%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="phase2Body">
+                    <!-- Dynamically Populated -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BENCHMARK RATE COMPARISON -->
+        <div class="benchmark-box">
+            <div>
+                <div class="benchmark-title">Regional & Industry Benchmark Comparison</div>
+                <span>Peer environmental consulting firms typically bill licensed MAC/IAC assessors at $210–$260/hr, add 35–50% lab markups, and charge heavy mobilization trip fees.</span>
+            </div>
+            <div class="tac">
+                <div style="color:var(--text-muted); font-size:6.5pt;">Market Standard Est.</div>
+                <div style="font-size:9pt; font-weight:700; color:#b91c1c; text-decoration:line-through;" id="uiMarketEst">$0.00</div>
+            </div>
+            <div class="tac">
+                <div style="color:var(--text-muted); font-size:6.5pt;">BiDS Total Project Fee</div>
+                <div style="font-size:10pt; font-weight:800; color:var(--primary);" id="uiBidsTotalBox">$0.00</div>
+                <div style="font-size:6.8pt; color:#15803d; font-weight:700;" id="uiSavings">Client Savings: ~20%</div>
+            </div>
+        </div>
+
+        <!-- TOTALS & SUMMARY -->
+        <div class="summary-flex">
+            <div class="scope-notes">
+                <strong>Statutory Compliance & Legal Protections:</strong>
+                <ul>
+                    <li><strong>Containment Integrity:</strong> Poly barriers and HEPA scrubbers must operate continuously until written clearance is issued.</li>
+                    <li><strong>Insurance Protection:</strong> Completed Form MDR-1 Section B protects the property owner against insurance discrimination.</li>
+                    <li><strong>Source Mandate:</strong> Licensed repairs and pressure testing must be complete prior to build-back.</li>
+                </ul>
+            </div>
+            <div>
+                <table class="totals-table">
+                    <tr>
+                        <td><strong>Phase 1 Subtotal (Assessment & Lab):</strong></td>
+                        <td class="tar"><strong id="sumP1">$0.00</strong></td>
+                    </tr>
+                    <tr id="rowP2Sum" style="display:none;">
+                        <td><strong>Phase 2 Subtotal (PRV Clearance):</strong></td>
+                        <td class="tar"><strong id="sumP2">$0.00</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Combined Professional Labor:</td>
+                        <td class="tar" id="sumLabor">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Combined Laboratory Testing & Media:</td>
+                        <td class="tar" id="sumLab">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Travel & Mileage Mobilization:</td>
+                        <td class="tar" id="sumTravel" style="color:#15803d; font-weight:700;">$0.00 (Waived)</td>
+                    </tr>
+                    <tr class="grand-row">
+                        <td>TOTAL COMPREHENSIVE ESTIMATE:</td>
+                        <td class="tar" id="sumGrand">$0.00</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERNAL AUDIT BAR (Hidden from print) -->
+    <div id="internalAuditBar" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 6px; border-radius: 4px; position: absolute; bottom: 0.35in; left: 0.35in; width: calc(100% - 0.7in); font-size: 7.5pt; color: #047857;">
+        <strong>INTERNAL AUDIT (NO PRINT):</strong> Raw Wholesale Lab: <span id="auditRaw">$0.00</span> | Net Billed Lab: <span id="auditBilled">$0.00</span> | BIDS Sampling Profit Margin: <strong id="auditMargin">$0.00</strong>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div>
+            <strong>BiDS, LLC</strong> | Building Diagnostics & Environmental Consulting | P.O. Box 33561, Amarillo, TX 79120
+        </div>
+        <div class="signature-block">
+            <span>Protocol Certification:</span>
+            <span class="sig-line"></span>
+            <span>Mason Sanders, MAC #1940 / IAC #105877</span>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Master Rates Database
+    const TIER_DATA = {
+        residential: { name: "Residential Tier", rates: { "Consultant": 140, "Field Tech": 80, "CAD Tech": 75, "Tech Writer": 85, "Admin": 50 }, mileage: 0.75, labMarkup: 1.20 },
+        commercial: { name: "Commercial Base", rates: { "Consultant": 160, "Field Tech": 95, "CAD Tech": 90, "Tech Writer": 105, "Admin": 60 }, mileage: 0.85, labMarkup: 1.20 },
+        institutional: { name: "Institutional", rates: { "Consultant": 145, "Field Tech": 85, "CAD Tech": 80, "Tech Writer": 90, "Admin": 50 }, mileage: 0.75, labMarkup: 1.15 },
+        industrial_pantex: { name: "Industrial / Pantex", rates: { "Consultant": 195, "Field Tech": 125, "CAD Tech": 110, "Tech Writer": 130, "Admin": 75 }, mileage: 0.95, labMarkup: 1.25 }
+    };
+
+    function toggleAuditing() {
+        const bar = document.getElementById('internalAuditBar');
+        bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function createRow(desc, detail, vendor, units, rate, total) {
+        return `
+            <tr>
+                <td>
+                    <span class="service-desc">${desc}:</span>
+                    <span class="service-detail">${detail}</span>
+                </td>
+                <td class="tac">${vendor}</td>
+                <td class="tac">${units}</td>
+                <td class="tar">$${rate.toFixed(2)}</td>
+                <td class="tar">$${total.toFixed(2)}</td>
+            </tr>
+        `;
+    }
+
+    // Auto-Loader from URL Parameters
+    function runEstimator() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Ensure defaults if no parameters exist
+        const project = params.get('project') || "Field Assessment";
+        const tierKey = params.get('tier') || "commercial";
+        const sqft = parseFloat(params.get('sqft')) || 0;
+        const rooms = parseFloat(params.get('rooms')) || 0;
+        const discipline = params.get('discipline') || "mold";
+        const miles = parseFloat(params.get('miles')) || 0;
+        const moldIn = parseFloat(params.get('mold_in')) || 0;
+        const moldSurf = parseFloat(params.get('mold_surf')) || 0;
+        const plm = parseFloat(params.get('plm')) || 0;
+        
+        const scale = parseFloat(params.get('scale')) || 1.15; 
+
+        // Set Date
+        const today = new Date();
+        document.getElementById('invDate').innerText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        const t = TIER_DATA[tierKey] || TIER_DATA['commercial'];
+        
+        // UI Headers
+        document.getElementById('uiProjectName').innerText = project;
+        document.getElementById('uiSiteProfile').innerHTML = `<strong>Site:</strong> ${sqft > 0 ? sqft + ' SF' : 'Variable Area'}, ${rooms} Functional Zones Evaluated`;
+        
+        let scaleText = scale === 1.15 ? "1.15x Priority Rush Schedule" : "1.00x Standard Base Schedule";
+        document.getElementById('uiTierProfile').innerHTML = `<strong>Schedule:</strong> ${t.name} (${scaleText})`;
+        document.getElementById('uiScaleP1').innerText = `Rate Scale: ${scaleText}`;
+        document.getElementById('uiClientName').innerHTML = `<strong>${project.split(',')[0]}</strong>`;
+
+        // Labor Math (Phase 1)
+        const totalSamples = moldIn + moldSurf + plm;
+        
+        // Dynamic Hours Generation
+        const fTechHrs = (sqft > 0 || rooms > 0 ? 1.0 : 0) + (totalSamples > 0 ? totalSamples * 0.25 : 0) + (miles > 70 ? (miles/55) : 0);
+        const cadHrs = sqft > 0 ? 0.5 + (rooms * 0.15) : 0;
+        const writerHrs = (totalSamples > 0 ? 1.0 : 0) + (totalSamples * 0.05) + (cadHrs > 0 ? 0.5 : 0) + 0.5;
+        const consHrs = totalSamples > 0 ? 1.5 : 0;
+        const adminHrs = totalSamples > 0 ? 1.0 : 0;
+
+        let p1LaborTotal = 0;
+        let p1Html = "";
+        
+        const fTechRate = t.rates["Field Tech"] * scale;
+        const fTechTotal = fTechHrs * fTechRate;
+        p1LaborTotal += fTechTotal;
+        p1Html += createRow("Forensic Field Assessment", "Site inspections, moisture mapping, instrumentation logging, and photo documentation.", "Field Tech", `${fTechHrs.toFixed(1)} Hrs`, fTechRate, fTechTotal);
+
+        if (cadHrs > 0) {
+            const cadRate = t.rates["CAD Tech"] * scale;
+            const cadTotal = cadHrs * cadRate;
+            p1LaborTotal += cadTotal;
+            p1Html += createRow("Engineering Spatial Drawings", "2D layout drafting and containment boundary design.", "CAD Tech", `${cadHrs.toFixed(1)} Hrs`, cadRate, cadTotal);
+            p1Html += createRow("2D SmartDraw Architecture Setup", "Digital capture and dimension calibration.", "System", `${sqft} SF`, 0.06, sqft * 0.06);
+            p1LaborTotal += sqft * 0.06;
+        }
+
+        const wRate = t.rates["Tech Writer"] * scale;
+        const wTotal = writerHrs * wRate;
+        p1LaborTotal += wTotal;
+        p1Html += createRow("Technical Reporting & Protocol", "Authoring binding legal specification, demolition schedules, and photographic takeoff.", "Tech Writer", `${writerHrs.toFixed(1)} Hrs`, wRate, wTotal);
+
+        const cRate = t.rates["Consultant"] * scale;
+        const cTotal = consHrs * cRate;
+        p1LaborTotal += cTotal;
+        p1Html += createRow("Consultant MAC/IAC Certification", "Independent data interpretation, toxicological evaluation & legal sign-off.", "Consultant", `${consHrs.toFixed(1)} Hrs`, cRate, cTotal);
+
+        const aRate = t.rates["Admin"] * scale;
+        const aTotal = adminHrs * aRate;
+        p1LaborTotal += aTotal;
+        p1Html += createRow("Project Admin & Custody", "Laboratory logging, dispatch, and contractor notification verification.", "Admin", `${adminHrs.toFixed(1)} Hrs`, aRate, aTotal);
+
+        // Lab Math
+        let labRaw = 0;
+        let labBilled = 0;
+        let p1LabTotal = 0;
+
+        if (discipline === 'mold') {
+            if (moldIn > 0) {
+                const clientRate = scale > 1.0 ? 65.00 * 1.2 : 55.00;
+                const rawRate = scale > 1.0 ? 30.00 : 26.00;
+                labRaw += moldIn * rawRate;
+                const billed = (moldIn * clientRate) * t.labMarkup;
+                labBilled += billed;
+                p1LabTotal += billed;
+                p1Html += createRow("Bioaerosol Spore Traps (ASTM D7391)", `CA Labs Dallas expedited priority counts. Includes ${((t.labMarkup-1)*100).toFixed(0)}% markup.`, "CA Labs", `${moldIn} Tests`, clientRate * t.labMarkup, billed);
+            }
+            if (moldSurf > 0) {
+                const clientRate = scale > 1.0 ? 50.00 * 1.2 : 40.00;
+                const rawRate = scale > 1.0 ? 25.00 : 22.00;
+                labRaw += moldSurf * rawRate;
+                const billed = (moldSurf * clientRate) * t.labMarkup;
+                labBilled += billed;
+                p1LabTotal += billed;
+                p1Html += createRow("Surface/Bulk Destructive Analysis", `CA Labs Dallas direct examination. Includes ${((t.labMarkup-1)*100).toFixed(0)}% markup.`, "CA Labs", `${moldSurf} Tests`, clientRate * t.labMarkup, billed);
+            }
+        } else if (discipline === 'asbestos' && plm > 0) {
+            const clientRate = scale > 1.0 ? 30.00 * 1.2 : 25.00;
+            const rawRate = scale > 1.0 ? 13.00 : 11.00;
+            labRaw += plm * rawRate;
+            const billed = (plm * clientRate) * t.labMarkup;
+            labBilled += billed;
+            p1LabTotal += billed;
+            p1Html += createRow("Asbestos PLM Bulk Sampling", `CA Labs Dallas EPA 600 Method analysis. Includes ${((t.labMarkup-1)*100).toFixed(0)}% markup.`, "CA Labs", `${plm} Tests`, clientRate * t.labMarkup, billed);
+        }
+
+        if (totalSamples > 0) {
+            p1LabTotal += totalSamples * 6.00;
+            p1Html += createRow("Field Sampling Media & PPE", "Cassettes, swabs, slides, core bits, Level C PPE consumables.", "Supplies", `${totalSamples} Units`, 6.00, totalSamples * 6.00);
+        }
+
+        document.getElementById('phase1Body').innerHTML = p1Html;
+
+        // Phase 2 Logic
+        let p2Total = 0;
+        let p2Labor = 0;
+        let p2Lab = 0;
+        
+        if (discipline === 'mold') {
+            document.getElementById('phase2Container').style.display = 'block';
+            document.getElementById('rowP2Sum').style.display = 'table-row';
+            
+            let p2Html = "";
+            const prvVisHrs = 2.5;
+            const prvVisTotal = prvVisHrs * cRate;
+            p2Labor += prvVisTotal;
+            p2Html += createRow("Comprehensive Visual Clearance", `Inspection under -0.020" w.c.; 100% absence of mold/debris.`, "Consultant", `${prvVisHrs} Hrs`, cRate, prvVisTotal);
+
+            const prvMoisHrs = 1.5;
+            const prvMoisTotal = prvMoisHrs * cRate;
+            p2Labor += prvMoisTotal;
+            p2Html += createRow("Structural Wood Moisture Verification", "Pin-probe mapping across joists/studs to verify <15.0% WME.", "Consultant", `${prvMoisHrs} Hrs`, cRate, prvMoisTotal);
+
+            const prvAirHrs = 2.0;
+            const prvAirTotal = prvAirHrs * fTechRate;
+            p2Labor += prvAirTotal;
+            p2Html += createRow("Aggressive Bioaerosol Sampling", "Cassette collection under aggressive air agitation.", "Field Tech", `${prvAirHrs} Hrs`, fTechRate, prvAirTotal);
+
+            const prvLabTests = 4;
+            const prvLabRawRate = 30.00; 
+            const prvLabClientRate = 65.00 * 1.2;
+            
+            labRaw += prvLabTests * prvLabRawRate;
+            const prvLabBilled = (prvLabTests * prvLabClientRate) * t.labMarkup;
+            p2Lab += prvLabBilled;
+            labBilled += prvLabBilled;
+            p2Html += createRow("PRV Bioaerosol Laboratory Clearance", "CA Labs priority count. Passing criteria: Indoor < Outdoor.", "CA Labs", `${prvLabTests} Tests`, prvLabClientRate * t.labMarkup, prvLabBilled);
+
+            const prvMdrHrs = 1.5;
+            const prvMdrTotal = prvMdrHrs * cRate;
+            p2Labor += prvMdrTotal;
+            p2Html += createRow("Form MDR-1 Section B Execution", "Auditing contractor work plan; issuing TDLR Certificate.", "Consultant", `${prvMdrHrs} Hrs`, cRate, prvMdrTotal);
+
+            p2Total = p2Labor + p2Lab;
+            document.getElementById('phase2Body').innerHTML = p2Html;
+        }
+
+        // Travel 
+        const travelTotal = miles * t.mileage;
+        let travelText = travelTotal > 0 ? `$${travelTotal.toFixed(2)} (${miles} miles)` : `$0.00 (Local Radius)`;
+        document.getElementById('sumTravel').innerText = travelText;
+        if (travelTotal === 0) document.getElementById('sumTravel').style.color = '#15803d';
+        else document.getElementById('sumTravel').style.color = 'inherit';
+
+        // Totals
+        const phase1Sub = p1LaborTotal + p1LabTotal;
+        document.getElementById('sumP1').innerText = `$${phase1Sub.toFixed(2)}`;
+        document.getElementById('sumP2').innerText = `$${p2Total.toFixed(2)}`;
+        
+        const totalStaffLabor = p1LaborTotal + p2Labor;
+        const totalLabAndMedia = p1LabTotal + p2Lab;
+        const grandTotal = totalStaffLabor + totalLabAndMedia + travelTotal;
+
+        document.getElementById('sumLabor').innerText = `$${totalStaffLabor.toFixed(2)}`;
+        document.getElementById('sumLab').innerText = `$${totalLabAndMedia.toFixed(2)}`;
+        document.getElementById('sumGrand').innerText = `$${grandTotal.toFixed(2)}`;
+        document.getElementById('uiBidsTotalBox').innerText = `$${grandTotal.toFixed(2)}`;
+
+        // Fake Market Benchmark +25% margin
+        const marketHigh = grandTotal * 1.35;
+        const marketLow = grandTotal * 1.20;
+        document.getElementById('uiMarketEst').innerText = `$${marketLow.toFixed(2)} – $${marketHigh.toFixed(2)}`;
+
+        // Internal Auditing
+        document.getElementById('auditRaw').innerText = `$${labRaw.toFixed(2)}`;
+        document.getElementById('auditBilled').innerText = `$${labBilled.toFixed(2)}`;
+        document.getElementById('auditMargin').innerText = `$${(labBilled - labRaw).toFixed(2)}`;
+    }
+
+    window.onload = runEstimator;
+</script>
+</body>
+</html>
